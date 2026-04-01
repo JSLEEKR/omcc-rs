@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
-[![Tests](https://img.shields.io/badge/Tests-170-green.svg?style=for-the-badge)](src/)
+[![Tests](https://img.shields.io/badge/Tests-182-green.svg?style=for-the-badge)](src/)
 
 High-performance Claude Code orchestration toolkit -- a Rust reimplementation of [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (19.5K stars).
 
@@ -273,7 +273,7 @@ omcc agents --tier opus  # Filter by tier
 ### HUD Status
 ```bash
 omcc status
-omcc status --no-color
+omcc --no-color status  # or: omcc status --no-color
 ```
 
 ### Autopilot Pipeline
@@ -303,20 +303,20 @@ src/
 
 ```bash
 cargo test
-# 170 tests across 10 modules
+# 182 tests across 10 modules
 ```
 
 Test coverage by module:
 - `config`: 13 tests (YAML/JSON parsing, defaults, lookups)
-- `state`: 11 tests (session lifecycle, persistence, TTL)
-- `keyword`: 18 tests (detection, code blocks, CJK, custom keywords)
-- `router`: 17 tests (scoring, thresholds, context, serialization)
-- `decompose`: 17 tests (classification, scoping, sorting, validation)
+- `state`: 12 tests (session lifecycle, persistence, TTL)
+- `keyword`: 20 tests (detection, code blocks, CJK, custom keywords)
+- `router`: 18 tests (scoring, thresholds, context, serialization)
+- `decompose`: 21 tests (classification, scoping, sorting, validation)
 - `agents`: 19 tests (registry, lookup, permissions, providers)
-- `skills`: 14 tests (hashing, learning, promotion, import/export)
-- `autopilot`: 16 tests (state machine, transitions, retries, abort)
+- `skills`: 15 tests (hashing, learning, promotion, import/export)
+- `autopilot`: 18 tests (state machine, transitions, retries, abort, stage validation)
 - `hook`: 20 tests (bridge routing, JSON processing, handlers)
-- `hud`: 19 tests (rendering, colors, truncation, progress bars)
+- `hud`: 26 tests (rendering, colors, truncation, progress bars, idle mode, Unicode)
 
 ## Dependencies
 

@@ -29,7 +29,7 @@ struct Cli {
     state_dir: PathBuf,
 
     /// Disable colors
-    #[arg(long)]
+    #[arg(long, global = true)]
     no_color: bool,
 }
 

@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::io::{self, BufRead, Write};
+use std::io::{self, Read, Write};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -207,9 +207,20 @@ impl HookBridge {
     /// Run the bridge in stdin/stdout mode (one-shot).
     pub fn run_oneshot(&self) -> Result<(), HookError> {
         let stdin = io::stdin();
+        let reader = stdin.lock();
+
+        // Use Take to enforce a hard read limit BEFORE buffering into memory,
+        // preventing OOM from unbounded stdin input.
+        let mut limited = reader.take((Self::MAX_INPUT_SIZE + 1) as u64);
         let mut input_str = String::new();
-        let mut reader = stdin.lock();
-        let bytes_read = reader.read_line(&mut input_str)?;
+        let bytes_read = limited.read_to_string(&mut input_str)
+            .map_err(|e| {
+                if e.kind() == io::ErrorKind::InvalidData {
+                    HookError::HandlerError("Invalid UTF-8 in input".to_string())
+                } else {
+                    HookError::IoError(e)
+                }
+            })?;
 
         if bytes_read > Self::MAX_INPUT_SIZE {
             return Err(HookError::HandlerError(

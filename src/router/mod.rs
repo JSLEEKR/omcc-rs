@@ -40,6 +40,8 @@ pub struct ModelRouter {
     code_pattern_re: Regex,
     technical_terms_re: Regex,
     simple_task_re: Regex,
+    file_path_re: Regex,
+    numbered_list_re: Regex,
 }
 
 impl ModelRouter {
@@ -53,6 +55,12 @@ impl ModelRouter {
             ).unwrap(),
             simple_task_re: Regex::new(
                 r"(?i)^(fix typo|update readme|change color|rename|add comment|format code|lint|simple|trivial|quick|minor)"
+            ).unwrap(),
+            file_path_re: Regex::new(
+                r"(?i)\b[\w/\\]+\.(rs|ts|py|go|js|java|c|cpp|h)\b"
+            ).unwrap(),
+            numbered_list_re: Regex::new(
+                r"^\s*\d+[\.\)]\s"
             ).unwrap(),
         }
     }
@@ -129,18 +137,16 @@ impl ModelRouter {
         let nesting_chars: usize = prompt.chars().filter(|c| matches!(c, '{' | '[' | '(')).count();
         score += (nesting_chars as f64 * 0.05).min(0.3);
 
-        // File path references
-        let file_re = Regex::new(r"(?i)\b[\w/\\]+\.(rs|ts|py|go|js|java|c|cpp|h)\b").unwrap();
-        let file_count = file_re.find_iter(prompt).count();
+        // File path references (use pre-compiled regex)
+        let file_count = self.file_path_re.find_iter(prompt).count();
         score += (file_count as f64 * 0.08).min(0.4);
 
         // Code block presence
         let code_blocks = prompt.matches("```").count() / 2;
         score += (code_blocks as f64 * 0.1).min(0.3);
 
-        // Numbered list / structured plan
-        let numbered_re = Regex::new(r"^\s*\d+[\.\)]\s").unwrap();
-        let numbered_lines = prompt.lines().filter(|l| numbered_re.is_match(l)).count();
+        // Numbered list / structured plan (use pre-compiled regex)
+        let numbered_lines = prompt.lines().filter(|l| self.numbered_list_re.is_match(l)).count();
         if numbered_lines >= 5 {
             score += 0.2;
         } else if numbered_lines >= 3 {

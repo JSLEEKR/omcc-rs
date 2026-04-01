@@ -104,6 +104,17 @@ impl AutopilotPipeline {
 
     /// Complete the current stage and advance.
     pub fn complete_stage(&mut self, result: StageResult) -> TransitionResult {
+        // Validate that the result stage matches the current pipeline stage.
+        // Mismatched stages would pollute history with incorrect entries.
+        if result.stage != self.current_stage {
+            return TransitionResult::InvalidTransition(
+                format!(
+                    "Stage mismatch: pipeline is in {} but result reports {}",
+                    self.current_stage, result.stage
+                ),
+            );
+        }
+
         self.history.push(result.clone());
 
         if !result.success {
@@ -443,5 +454,16 @@ mod tests {
         let restored: AutopilotPipeline = serde_json::from_str(&json).unwrap();
         assert_eq!(restored.current_stage, Stage::Planning);
         assert_eq!(restored.task_description, "task");
+    }
+
+    #[test]
+    fn test_stage_mismatch_rejected() {
+        let mut p = AutopilotPipeline::new("task", 10, 3);
+        p.start();
+        // Pipeline is in Planning, but we send a result for Executing
+        let r = p.complete_stage(make_result(Stage::Executing, true));
+        assert!(matches!(r, TransitionResult::InvalidTransition(_)));
+        // Pipeline should still be in Planning
+        assert_eq!(p.current_stage, Stage::Planning);
     }
 }

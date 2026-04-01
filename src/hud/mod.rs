@@ -172,6 +172,7 @@ impl HudRenderer {
 
     fn render_mode(&self, mode: &str) -> String {
         let (icon, color) = match mode {
+            "idle" => ("ID", Colors::DIM),
             "autopilot" => ("AP", Colors::GREEN),
             "ralph" => ("RL", Colors::YELLOW),
             "ultrawork" => ("UW", Colors::MAGENTA),
@@ -206,9 +207,10 @@ impl HudRenderer {
     }
 
     fn truncate_to_width(&self, line: &str) -> String {
-        // Strip ANSI codes for length calculation
+        // Strip ANSI codes for length calculation, use char count not byte length
+        // to handle multi-byte UTF-8 correctly
         let plain = strip_ansi(line);
-        if plain.len() <= self.max_width || self.max_width < 4 {
+        if plain.chars().count() <= self.max_width || self.max_width < 4 {
             line.to_string()
         } else {
             // Truncate the plain text, but we need to be careful with ANSI codes
@@ -537,5 +539,31 @@ mod tests {
         };
         let output = r.render(&state);
         assert!(output.contains("[??]"));
+    }
+
+    #[test]
+    fn test_render_idle_mode_has_icon() {
+        let r = plain_renderer();
+        let state = HudState {
+            mode: Some("idle".to_string()),
+            ..Default::default()
+        };
+        let output = r.render(&state);
+        assert!(output.contains("[ID]"), "idle mode should show [ID], got: {}", output);
+    }
+
+    #[test]
+    fn test_truncate_multibyte_chars_not_over_aggressive() {
+        // Multi-byte UTF-8 chars should be counted by char, not bytes
+        let r = HudRenderer::new(10, false);
+        // 5 ASCII chars = 5 bytes, 5 chars -> should NOT be truncated at width 10
+        let ascii = "hello";
+        assert_eq!(r.truncate_to_width(ascii), "hello");
+        // 5 CJK chars = 15 bytes, 5 chars -> should NOT be truncated at width 10
+        let cjk = "\u{D55C}\u{AD6D}\u{C5B4}\u{D14C}\u{C2A4}";
+        assert_eq!(cjk.chars().count(), 5);
+        let result = r.truncate_to_width(cjk);
+        // With char-based counting, 5 chars <= 10 width, so no truncation
+        assert_eq!(result, cjk, "CJK string with 5 chars should not be truncated at width 10");
     }
 }

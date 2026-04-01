@@ -100,6 +100,20 @@ impl TaskDecomposer {
     fn classify(&self, task: &str) -> TaskType {
         let lower = task.to_lowercase();
 
+        // Detect numbered lists as multi-step FIRST (e.g. "1. Do X\n2. Do Y\n3. Do Z").
+        // A structured numbered list is clearly a multi-step task regardless of keywords.
+        let numbered_line_count = task
+            .lines()
+            .filter(|l| {
+                let trimmed = l.trim();
+                trimmed.starts_with(|c: char| c.is_ascii_digit())
+                    && (trimmed.contains('.') || trimmed.contains(')'))
+            })
+            .count();
+        if numbered_line_count >= 2 {
+            return TaskType::MultiStep;
+        }
+
         if lower.contains("debug") || lower.contains("fix bug") || lower.contains("error") {
             return TaskType::Debug;
         }
@@ -632,5 +646,25 @@ mod tests {
         let plan = d.decompose("");
         assert_eq!(plan.task_type, TaskType::SingleStep);
         assert!(!plan.subtasks.is_empty());
+    }
+
+    #[test]
+    fn test_numbered_list_overrides_keyword_classification() {
+        // A numbered list containing "analyze" should be MultiStep, not Research
+        let d = decomposer();
+        let task = "1. Analyze requirements\n2. Design architecture\n3. Review patterns\n4. Run benchmarks\n5. Prepare docs";
+        let plan = d.decompose(task);
+        assert_eq!(plan.task_type, TaskType::MultiStep);
+        assert_eq!(plan.subtasks.len(), 5);
+    }
+
+    #[test]
+    fn test_numbered_list_with_debug_keyword() {
+        // A numbered list containing "debug"/"error" should still be MultiStep
+        let d = decomposer();
+        let task = "1. Reproduce the error\n2. Debug the handler\n3. Fix validation\n4. Add tests";
+        let plan = d.decompose(task);
+        assert_eq!(plan.task_type, TaskType::MultiStep);
+        assert!(plan.subtasks.len() >= 4);
     }
 }

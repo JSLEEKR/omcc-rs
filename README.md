@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
-[![Tests](https://img.shields.io/badge/Tests-182-green.svg?style=for-the-badge)](src/)
+[![Tests](https://img.shields.io/badge/Tests-184-green.svg?style=for-the-badge)](src/)
 
 High-performance Claude Code orchestration toolkit -- a Rust reimplementation of [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) (19.5K stars).
 
@@ -234,13 +234,16 @@ echo '{"hook_type": "keyword_detector", "payload": "autopilot fix all bugs"}' | 
 omcc route "Implement a distributed microservice with authentication"
 # Output:
 # Routing Decision:
-#   Tier:       opus
-#   Score:      0.782
-#   Lexical:    0.600
-#   Structural: 0.150
+#   Tier:       haiku
+#   Score:      0.164
+#   Lexical:    0.410
+#   Structural: 0.000
 #   Context:    0.000
-#   Confidence: 0.823
-#   Reason:     Complex task -- high complexity signals
+#   Confidence: 0.805
+#   Reason:     Simple task -- low complexity signals
+#
+# Note: Context score is 0 from CLI (no conversation history).
+# In hook bridge mode with context, scores are higher.
 ```
 
 ### Task Decomposition
@@ -303,7 +306,7 @@ src/
 
 ```bash
 cargo test
-# 182 tests across 10 modules
+# 184 tests across 10 modules
 ```
 
 Test coverage by module:
@@ -311,7 +314,7 @@ Test coverage by module:
 - `state`: 12 tests (session lifecycle, persistence, TTL)
 - `keyword`: 20 tests (detection, code blocks, CJK, custom keywords)
 - `router`: 18 tests (scoring, thresholds, context, serialization)
-- `decompose`: 21 tests (classification, scoping, sorting, validation)
+- `decompose`: 23 tests (classification, scoping, sorting, validation, numbered list priority)
 - `agents`: 19 tests (registry, lookup, permissions, providers)
 - `skills`: 15 tests (hashing, learning, promotion, import/export)
 - `autopilot`: 18 tests (state machine, transitions, retries, abort, stage validation)
